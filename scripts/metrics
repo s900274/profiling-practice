@@ -1,0 +1,28 @@
+#!/bin/bash
+
+script_execute_time () {
+    if [ $debug -eq 1 ]; then
+        timer_off=$(date +%s.%N)
+        actual_interval=$(echo "$timer_off - $now" | bc)
+        echo "[$(date "+%Y/%m/%d %H:%M:%S")] $script_name: EXEC_TIME=$EXECUTE_INTERVAL ACTUAL_TIME=$actual_interval" | sudo tee -a $debug_log > /dev/null
+    fi
+}
+
+EXECUTE_INTERVAL=5
+
+while true
+do
+    output=$(wget -qO- http://localhost:8080/metrics)
+
+    now=$(date "+%s.%N")
+    time_sec=$(echo $now | cut -d'.' -f1)
+
+    # Lists
+    counter_foo=$(echo "$output" | awk '/counter foo/{a=1;next}/----------/{a=0}a')
+    # Counter - foo
+    counter_foo_count=$(echo "$counter_foo" | awk '{print $4}')
+
+    echo "PUTVAL golang/metrics-practice/counter-foo $time_sec:$counter_foo_count"
+
+    sleep $EXECUTE_INTERVAL
+done
